@@ -1,0 +1,45 @@
+cmake_minimum_required(VERSION 3.20)
+project(LearnOpenGL LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# GLFW 
+# Desactivamos la construcción de tests y docs de GLFW para ir más rápido
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+add_subdirectory(external/glfw)
+
+# OpenGL
+find_package(OpenGL REQUIRED)
+
+# Sources
+set(SOURCES 
+    src/hellowindow.cpp
+)
+
+# Executable
+add_executable(${PROJECT_NAME} ${SOURCES})
+
+# Inlcudes
+target_include_directories(${PROJECT_NAME}
+    PRIVATE 
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        external/glfw/include
+)
+
+# Libraries
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE
+        glfw
+        ${OpenGL_LIBRARIES} # Usamos la variable de find_package para mayor compatibilidad
+)
+
+# Compiler options 
+if (MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE /W4)
+else()
+    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+    # En Linux, a veces es necesario enlazar librerías de sistema adicionales
+    target_link_libraries(${PROJECT_NAME} PRIVATE dl pthread)
+endif()
