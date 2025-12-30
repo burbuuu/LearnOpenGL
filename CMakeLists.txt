@@ -1,8 +1,17 @@
 cmake_minimum_required(VERSION 3.20)
-project(LearnOpenGL LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+project(LearnOpenGL LANGUAGES C CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Prefer user-selected build type; default to Debug for single-config generators
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
+endif()
+message(STATUS "CMake build type: ${CMAKE_BUILD_TYPE}")
+
 
 # GLFW
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -19,12 +28,12 @@ add_library(glad STATIC
 
 target_include_directories(glad
     PUBLIC
-        external/glad/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/glad/include
 )
 
 target_link_libraries(glad
     PUBLIC
-        OpenGL::GL
+        OpenGL::OpenGL
 )
 
 # Executable
