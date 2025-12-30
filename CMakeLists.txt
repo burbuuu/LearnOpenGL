@@ -52,6 +52,10 @@ target_link_libraries(${PROJECT_NAME}
         glad
 )
 
+# Resources: Copy resources dir to build directory
+file(COPY ${CMAKE_SOURCE_DIR}/resources
+     DESTINATION ${CMAKE_BINARY_DIR})
+
 # Warnings
 if (MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W4)

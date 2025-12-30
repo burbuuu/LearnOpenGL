@@ -1,0 +1,17 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+BreakBeforeBraces: Allman
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+
+IncludeCategories:
+  - Regex: '^<glad/'
+    Priority: 1
+  - Regex: '^<GLFW/'
+    Priority: 2
+  - Regex: '^<.*>'
+    Priority: 3
