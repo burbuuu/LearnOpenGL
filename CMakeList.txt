@@ -4,8 +4,7 @@ project(LearnOpenGL LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# GLFW 
-# Desactivamos la construcción de tests y docs de GLFW para ir más rápido
+# GLFW
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/glfw)
@@ -13,33 +12,40 @@ add_subdirectory(external/glfw)
 # OpenGL
 find_package(OpenGL REQUIRED)
 
-# Sources
-set(SOURCES 
-    src/hellowindow.cpp
+# GLAD
+add_library(glad STATIC
+    external/glad/src/glad.c
+)
+
+target_include_directories(glad
+    PUBLIC
+        external/glad/include
+)
+
+target_link_libraries(glad
+    PUBLIC
+        OpenGL::GL
 )
 
 # Executable
-add_executable(${PROJECT_NAME} ${SOURCES})
-
-# Inlcudes
-target_include_directories(${PROJECT_NAME}
-    PRIVATE 
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        external/glfw/include
+add_executable(${PROJECT_NAME}
+    src/hellowindow.cpp
 )
 
-# Libraries
+target_include_directories(${PROJECT_NAME}
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         glfw
-        ${OpenGL_LIBRARIES} # Usamos la variable de find_package para mayor compatibilidad
+        glad
 )
 
-# Compiler options 
+# Warnings
 if (MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W4)
 else()
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
-    # En Linux, a veces es necesario enlazar librerías de sistema adicionales
-    target_link_libraries(${PROJECT_NAME} PRIVATE dl pthread)
 endif()
