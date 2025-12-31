@@ -4,9 +4,14 @@ TabWidth: 4
 UseTab: Never
 
 BreakBeforeBraces: Allman
+
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
+
+IndentAccessModifiers: false
+AccessModifierOffset: -4
+
 
 IncludeCategories:
   - Regex: '^<glad/'
