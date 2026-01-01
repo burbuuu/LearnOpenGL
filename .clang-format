@@ -1,22 +1,32 @@
 BasedOnStyle: LLVM
+
 IndentWidth: 4
 TabWidth: 4
 UseTab: Never
+ColumnLimit: 0
 
 BreakBeforeBraces: Allman
 
-AllowShortFunctionsOnASingleLine: None
-AllowShortIfStatementsOnASingleLine: false
+PointerAlignment: Left
+
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: true
 AllowShortLoopsOnASingleLine: false
 
-IndentAccessModifiers: false
-AccessModifierOffset: -4
+BinPackParameters: false
+BinPackArguments: false
 
+BreakConstructorInitializers: BeforeComma
+AllowAllConstructorInitializersOnNextLine: true
+
+SortIncludes: true
 
 IncludeCategories:
   - Regex: '^<glad/'
     Priority: 1
   - Regex: '^<GLFW/'
     Priority: 2
-  - Regex: '^<.*>'
+  - Regex: '^<glm/'
     Priority: 3
+  - Regex: '^<.*>'
+    Priority: 4

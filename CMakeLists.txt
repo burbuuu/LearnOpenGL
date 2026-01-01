@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(LearnOpenGL LANGUAGES C CXX)
+project(Breakout LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED On)
-set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 17) # this does nothing for MSVC, use target_compile_options below
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS ON)
+
 
 # Prefer user-selected build type; default to Debug for single-config generators
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -41,12 +42,30 @@ target_link_libraries(glad
         OpenGL::OpenGL
 )
 
+# -------------------
+# ----- GLM ---------
+set(GLM_TEST_ENABLE OFF CACHE BOOL "" FORCE)
+add_subdirectory(external/glm)
+
+# ---------------------
+# ---- STB ----
+# Header-only interface
+add_library(stb INTERFACE)
+target_include_directories(stb INTERFACE external/stb)
+
+# Single implementation TU
+add_library(stb_impl STATIC src/engine/stb_image.cpp)
+target_link_libraries(stb_impl PUBLIC stb)
+
 # ---------------------
 # ---- Executable ---- 
 
 add_executable(${PROJECT_NAME}
-    src/hellowindow.cpp
-    src/Shader.cpp
+    src/engine/Game.cpp
+    src/engine/ResourceManager.cpp
+    src/engine/Shader.cpp
+    src/engine/Texture.cpp
+    src/main.cpp
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -58,24 +77,31 @@ target_link_libraries(${PROJECT_NAME}
     PRIVATE
         glfw
         glad
+        glm::glm
+        stb_impl
 )
 
-# -----------------------------
-# ---- Resource managment -----
+# -------------------
+# ---- Output dirs ---
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/bin/Debug
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/bin/Release
+)
 
-# Source and runtime resource directories
+
+# -----------------------------
+# ---- Resource management ----
+
 set(RESOURCE_SRC_DIR "${CMAKE_SOURCE_DIR}/resources")
 set(RESOURCE_DST_DIR "$<TARGET_FILE_DIR:${PROJECT_NAME}>/resources")
-
-# Stamp file for incremental copying
 set(RESOURCE_STAMP "${CMAKE_BINARY_DIR}/resources.stamp")
 
-# Track all resource files
 file(GLOB_RECURSE RESOURCE_FILES
+    CONFIGURE_DEPENDS
     "${RESOURCE_SRC_DIR}/*"
 )
 
-# Copy resources when they change
 add_custom_command(
     OUTPUT ${RESOURCE_STAMP}
     COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -84,16 +110,13 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E touch ${RESOURCE_STAMP}
     DEPENDS ${RESOURCE_FILES}
     COMMENT "Updating resources..."
-    VERBATIM
 )
 
-# Resource update target
-add_custom_target(${PROJECT_NAME}_resources ALL
+add_custom_target(resources ALL
     DEPENDS ${RESOURCE_STAMP}
 )
 
-# Ensure resources are ready before the executable
-add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_resources)
+add_dependencies(${PROJECT_NAME} resources)
 
 # -------------------
 # ---- Warnings -----
