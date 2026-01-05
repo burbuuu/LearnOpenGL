@@ -67,6 +67,8 @@ add_executable(${PROJECT_NAME}
     src/engine/SpriteRenderer.cpp
     src/Game.cpp
     src/main.cpp
+    src/GameLevel.cpp
+    src/GameObject.cpp
 )
 
 target_include_directories(${PROJECT_NAME}
