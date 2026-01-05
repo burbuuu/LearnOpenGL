@@ -1,6 +1,9 @@
 #include <Game.hpp>
 #include <engine/ResourceManager.hpp>
+#include "BallObject.hpp"
+#include "GLFW/glfw3.h"
 #include "GameObject.hpp"
+#include "glm/fwd.hpp"
 #include <algorithm>
 
 
@@ -12,6 +15,7 @@ Game::Game(unsigned int width, unsigned int heigth)
     , Height(heigth)
     , renderer(nullptr)
     , Player(nullptr)
+    , Ball(nullptr)
 {
 }
 
@@ -33,7 +37,7 @@ void Game::Init()
     renderer = new SpriteRenderer(ResourceManager::GetShader("sprite"));
 
     // load textures
-    ResourceManager::LoadTexture("resources/textures/awesomeface.png", true, "face");
+    ResourceManager::LoadTexture("resources/textures/awesomeface.png", true, "face"); // Ball texture
     ResourceManager::LoadTexture("resources/textures/background.jpg", false, "background");
     ResourceManager::LoadTexture("resources/textures/block.png", false, "block");
     ResourceManager::LoadTexture("resources/textures/block_solid.png", false, "block_solid");
@@ -55,9 +59,16 @@ void Game::Init()
     // Initialize player
     glm::vec2 playerInitialPos = glm::vec2(Width/2.0f - PLAYER_SIZE.x/2.0f, Height- PLAYER_SIZE.y);
     Player = new GameObject(playerInitialPos, PLAYER_SIZE, ResourceManager::GetTexture("paddle"));
+
+    // Initialize ball
+    glm::vec2 ballPos = playerInitialPos + glm::vec2(PLAYER_SIZE.x/2.0f - BALL_RADIUS, -BALL_RADIUS *2.0f);
+    Ball = new BallObject(ballPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("face"));
 }
 
-void Game::Update(float dt) {}
+void Game::Update(float dt) 
+{
+    Ball->Move(dt, this->Width);
+}
 
 void Game::ProcessInput(float dt) 
 {
@@ -65,6 +76,7 @@ void Game::ProcessInput(float dt)
     {   
         // Define gameplay input here
         float velocity = PLAYER_VELOCITY * dt;
+        float oldX = Player->Position.x;
 
         // Move player
         if (Keys[GLFW_KEY_A])
@@ -75,6 +87,18 @@ void Game::ProcessInput(float dt)
 
         // Clamp X position
         Player->Position.x = std::clamp(Player->Position.x,0.0f,this->Width - Player->Size.x);
+
+        // Move ball with the player if is stuck
+        if(Ball->stuck)
+        {
+            float deltaX = Player->Position.x - oldX;
+            Ball->Position.x += deltaX;
+        }
+
+        if(Keys[GLFW_KEY_SPACE])
+        {
+            Ball->stuck = false;
+        }
     }
 }
 
@@ -90,5 +114,8 @@ void Game::Render()
 
         // Draw player
         Player->Draw(*renderer);
+
+        // Render ball
+        Ball->Draw(*renderer);
     }
 }
