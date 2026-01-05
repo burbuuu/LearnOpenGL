@@ -1,5 +1,4 @@
-#include <BallObject.hpp>
-#include "GameObject.hpp"
+#include "BallObject.hpp"
 
 
 BallObject::BallObject(glm::vec2 pos, float radius, glm::vec2 velocity, Texture2D sprite)

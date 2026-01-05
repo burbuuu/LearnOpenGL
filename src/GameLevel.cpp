@@ -1,5 +1,8 @@
-#include <GameLevel.hpp>
-#include <engine/ResourceManager.hpp>
+#include "GameLevel.hpp"
+
+#include "GameObject.hpp"
+#include "engine/ResourceManager.hpp"
+#include "engine/SpriteRenderer.hpp"
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -8,8 +11,6 @@
 #include <sstream>
 #include <iostream>
 #include <string>
-#include "GameObject.hpp"
-#include "engine/SpriteRenderer.hpp"
 
 void GameLevel::Load(const char *file, unsigned int levelWidth, unsigned int levelHeight) 
 {

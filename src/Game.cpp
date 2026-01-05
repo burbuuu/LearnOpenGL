@@ -1,9 +1,10 @@
-#include <Game.hpp>
-#include <engine/ResourceManager.hpp>
+#include "Game.hpp"
+#include "engine/ResourceManager.hpp"
 #include "BallObject.hpp"
-#include "GLFW/glfw3.h"
 #include "GameObject.hpp"
-#include "glm/fwd.hpp"
+
+#include <GLFW/glfw3.h>
+#include <glm/fwd.hpp>
 #include <algorithm>
 
 

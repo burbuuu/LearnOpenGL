@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 
-#include <GameObject.hpp>
+#include "GameObject.hpp"
 #include "engine/Texture.hpp"
 
 class BallObject : public GameObject

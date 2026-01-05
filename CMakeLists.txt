@@ -70,6 +70,7 @@ add_executable(${PROJECT_NAME}
     src/GameLevel.cpp
     src/GameObject.cpp
     src/BallObject.cpp
+    src/Collision.cpp
 )
 
 target_include_directories(${PROJECT_NAME}

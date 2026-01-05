@@ -3,8 +3,8 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
-#include <engine/Texture.hpp>
-#include <engine/SpriteRenderer.hpp>
+#include "engine/Texture.hpp"
+#include "engine/SpriteRenderer.hpp"
 
 // Contains state information relevant to a single game object
 class GameObject

@@ -1,4 +1,4 @@
-#include <GameObject.hpp>
+#include "GameObject.hpp"
 
 // Default constructor
 GameObject::GameObject()
