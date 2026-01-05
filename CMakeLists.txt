@@ -61,10 +61,11 @@ target_link_libraries(stb_impl PUBLIC stb)
 # ---- Executable ---- 
 
 add_executable(${PROJECT_NAME}
-    src/engine/Game.cpp
     src/engine/ResourceManager.cpp
     src/engine/Shader.cpp
     src/engine/Texture.cpp
+    src/engine/SpriteRenderer.cpp
+    src/Game.cpp
     src/main.cpp
 )
 

@@ -2,6 +2,8 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include "engine/SpriteRenderer.hpp"
 
 enum GameState
 {
@@ -26,4 +28,8 @@ class Game
     void ProcessInput(float dt);
     void Update(float dt);
     void Render();
+
+  SpriteRenderer* GetRenderer() { return renderer; }
+private:
+  SpriteRenderer* renderer;
 };

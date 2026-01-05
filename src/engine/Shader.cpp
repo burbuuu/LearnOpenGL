@@ -12,6 +12,11 @@
 
 Shader &Shader::Use()
 {
+    if (this->ID == 0)
+    {
+        std::cerr << "[ERROR::SHADER] Using shader with ID 0" << std::endl;
+    }
+
     glUseProgram(this->ID);
     return *this;
 }

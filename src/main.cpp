@@ -1,134 +1,121 @@
+/*******************************************************************
+** This code is part of Breakout.
+**
+** Breakout is free software: you can redistribute it and/or modify
+** it under the terms of the CC BY 4.0 license as published by
+** Creative Commons, either version 4 of the License, or (at your
+** option) any later version.
+******************************************************************/
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#include "Game.hpp"
+#include "engine/ResourceManager.hpp"
+
 #include <iostream>
-#include <engine/Shader.hpp>
 
+// GLFW function declarations
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 
-// Resize callback function
-void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+// The Width of the screen
+const unsigned int SCREEN_WIDTH = 800;
+// The height of the screen
+const unsigned int SCREEN_HEIGHT = 600;
 
-// Process input
+Game Breakout(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-void processInput(GLFWwindow *window);
-
-
-int main()
+int main(int argc, char *argv[])
 {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+    glfwWindowHint(GLFW_RESIZABLE, false);
 
-    // Creating the window
-    GLFWwindow *window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
-    if (window == NULL)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
+    GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Breakout", nullptr, nullptr);
     glfwMakeContextCurrent(window);
 
-    // Initialize GLAD
+    // glad: load all OpenGL function pointers
+    // ---------------------------------------
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
 
-    // Set the viewport
-    glViewport(0, 0, 800, 600);
-
-    // Register the resize callback
+    glfwSetKeyCallback(window, key_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    
-    // Create shader
-    Shader shader;
-    
-    // Define a triangle
-    float vertices[] = 
-    {
-        0.5f, 0.5f, 0.0f, // top right
-        0.5f, -0.5f, 0.0f, // bottom right
-        -0.5f, -0.5f,0.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f // top left
-    };
 
-    // define indices
-    unsigned int indices[] = 
-    {
-        0, 1, 3, // first triangle
-        1, 2, 3 // second triangle
-    };
+    // OpenGL configuration
+    // --------------------
+    glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-   unsigned int VBO, VAO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1,&EBO);
-    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-    glBindVertexArray(VAO);
+    // initialize game
+    // ---------------
+    Breakout.Init();
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    // deltaTime variables
+    // -------------------
+    float deltaTime = 0.0f;
+    float lastFrame = 0.0f;
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-    glBindBuffer(GL_ARRAY_BUFFER, 0); 
-
-    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    glBindVertexArray(0); 
-
-    // Wideframe
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-    // Game loop
     while (!glfwWindowShouldClose(window))
     {
-        processInput(window);
-        
-        
-        glClearColor(0.4, 0.2, 0.4, 1.0);
+        // calculate delta time
+        // --------------------
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+        glfwPollEvents();
+
+        // manage user input
+        // -----------------
+        Breakout.ProcessInput(deltaTime);
+
+        // update game state
+        // -----------------
+        Breakout.Update(deltaTime);
+
+        // render
+        // ------
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
-        //shader.use();
-
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6,GL_UNSIGNED_INT, 0);
+        Breakout.Render();
 
         glfwSwapBuffers(window);
-        glfwPollEvents();
     }
 
-    // optional: de-allocate all resources once they've outlived their purpose:
-    // ------------------------------------------------------------------------
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
-    //shader.cleanUp();
+    // delete all resources as loaded using the resource manager
+    // ---------------------------------------------------------
+    ResourceManager::Clear();
 
-    // Release resources
     glfwTerminate();
-
     return 0;
 }
 
-
-void framebuffer_size_callback(GLFWwindow *window, int width, int height)
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
-    glViewport(0, 0, width, height);
+    // when a user presses the escape key, we set the WindowShouldClose property to true, closing the application
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+    if (key >= 0 && key < 1024)
+    {
+        if (action == GLFW_PRESS)
+            Breakout.Keys[key] = true;
+        else if (action == GLFW_RELEASE)
+            Breakout.Keys[key] = false;
+    }
 }
 
-void processInput(GLFWwindow *window)
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(window, true);
-    }
+    // make sure the viewport matches the new window dimensions; note that width and 
+    // height will be significantly larger than specified on retina displays.
+    glViewport(0, 0, width, height);
 }
