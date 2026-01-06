@@ -1,4 +1,5 @@
 #include "Game.hpp"
+#include "Collision.hpp"
 #include "engine/ResourceManager.hpp"
 #include "BallObject.hpp"
 #include "GameObject.hpp"
@@ -68,7 +69,19 @@ void Game::Init()
 
 void Game::Update(float dt) 
 {
+    // Update objects
     Ball->Move(dt, this->Width);
+
+    // Check for collisions
+    DoCollisions();
+
+    // check loss condition
+    if (Ball->Position.y >= this->Height) // did ball reach bottom edge?
+    {
+        this->ResetLevel();
+        this->ResetPlayer();
+    }
+
 }
 
 void Game::ProcessInput(float dt) 
@@ -118,5 +131,95 @@ void Game::Render()
 
         // Render ball
         Ball->Draw(*renderer);
+    }
+}
+
+void Game::ResetLevel()
+{
+    switch (Level) 
+    {
+        case 0:
+            Levels[0].Load("resources/levels/one.lvl", Width, Height/2);
+            break;
+        case 1:
+            Levels[0].Load("resources/levels/two.lvl", Width, Height/2);
+            break;
+        case 2:
+            Levels[0].Load("resources/levels/three.lvl", Width, Height/2);
+            break;
+        case 3:
+            Levels[0].Load("resources/levels/four.lvl", Width, Height/2);
+            break;
+        default:
+            break;
+    }
+}
+
+void Game::ResetPlayer()
+{
+    // Reset player/ball state
+    Player->Size = PLAYER_SIZE;
+    Player->Position = glm::vec2(this->Width / 2.0f - PLAYER_SIZE.x / 2.0f, this->Height - PLAYER_SIZE.y);
+    Ball->Reset(Player->Position + glm::vec2(PLAYER_SIZE.x / 2.0f - BALL_RADIUS, -(BALL_RADIUS * 2.0f)), INITIAL_BALL_VELOCITY);
+}
+
+void Game::DoCollisions()
+{
+    for(GameObject &box : this->Levels[this->Level].Bricks)
+    {
+        // Skip destroyed boxes
+        if(box.Destroyed)
+        {
+            continue;
+        }
+
+        Collision collision = CheckCollision(*Ball, box);
+        if (std::get<0>(collision)) // if collision is true
+        {
+            // destroy block if not solid
+            if (!box.IsSolid)   box.Destroyed = true;
+            
+            // collision resolution
+            Direction dir = std::get<1>(collision);
+            glm::vec2 diff_vector = std::get<2>(collision);
+            if (dir == LEFT || dir == RIGHT) // horizontal collision
+            {
+                Ball->Velocity.x = -Ball->Velocity.x; // reverse horizontal velocity
+                // relocate
+                float penetration = Ball->radius - std::abs(diff_vector.x);
+                if (dir == LEFT)
+                    Ball->Position.x += penetration; // move ball to right
+                else
+                    Ball->Position.x -= penetration; // move ball to left;
+            }
+            else // vertical collision
+            {
+                Ball->Velocity.y = -Ball->Velocity.y; // reverse vertical velocity
+                // relocate
+                float penetration = Ball->radius - std::abs(diff_vector.y);
+                if (dir == UP)
+                    Ball->Position.y -= penetration; // move ball bback up
+                else
+                    Ball->Position.y += penetration; // move ball back down
+            }                      
+        }
+    }
+
+    // Check player collision
+    Collision result = CheckCollision(*Ball, *Player);
+    if (!Ball->stuck && std::get<0>(result))
+    {
+        // check where it hit the board, and change velocity based on where it hit the board
+        float centerBoard = Player->Position.x + Player->Size.x / 2.0f;
+        float distance = (Ball->Position.x + Ball->radius) - centerBoard;
+        float percentage = distance / (Player->Size.x / 2.0f);
+        // then move accordingly
+        float strength = 2.0f;
+        glm::vec2 oldVelocity = Ball->Velocity;
+        Ball->Velocity.x = INITIAL_BALL_VELOCITY.x * percentage * strength; 
+        //Ball->Velocity.y = -Ball->Velocity.y;
+        Ball->Velocity = glm::normalize(Ball->Velocity) * glm::length(oldVelocity); // keep speed consistent over both axes (multiply by length of old velocity, so total strength is not changed)
+        // fix sticky paddle
+        Ball->Velocity.y = -1.0f * abs(Ball->Velocity.y);
     }
 }

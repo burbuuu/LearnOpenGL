@@ -7,7 +7,7 @@
 #include "BallObject.hpp"
 #include "GameObject.hpp"
 #include "engine/SpriteRenderer.hpp"
-#include <GameLevel.hpp>
+#include "GameLevel.hpp"
 
 enum GameState
 {
@@ -26,33 +26,42 @@ const float BALL_RADIUS = 12.5f;
 
 class Game
 {
-
-  public:
+public:
     GameState State;
     bool Keys[1024];
     unsigned int Width, Height;
+    
     // Constructor and destructor
     Game(unsigned int width, unsigned int height);
     ~Game();
+
     // Initialize game state (load shaders, textures and levels)
     void Init();
+
     // Game loop
     void ProcessInput(float dt);
     void Update(float dt);
     void Render();
 
-  SpriteRenderer* GetRenderer() { return renderer; }
+    SpriteRenderer* GetRenderer(){ return renderer; }
+
+    // Reset
+    void ResetLevel();
+    void ResetPlayer();
+
+    void DoCollisions();
+    
+
 private:
-  SpriteRenderer* renderer;
+    SpriteRenderer* renderer;
 
-  // Levels
-  std::vector<GameLevel> Levels;
-  unsigned int Level;
+    // Levels
+    std::vector<GameLevel> Levels;
+    unsigned int Level;
 
-  // Player
-  GameObject *Player;
+    // Player
+    GameObject* Player;
 
-  // Ball
-  BallObject *Ball;
-  
+    // Ball
+    BallObject* Ball;
 };
