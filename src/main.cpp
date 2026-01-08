@@ -101,15 +101,24 @@ int main(int argc, char *argv[])
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
+    // Escape -> Close
     // when a user presses the escape key, we set the WindowShouldClose property to true, closing the application
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
     if (key >= 0 && key < 1024)
     {
         if (action == GLFW_PRESS)
+        {
             Breakout.Keys[key] = true;
+            Breakout.KeysProcessed[key] = false; // For single press actions this is needed
+
+        }
         else if (action == GLFW_RELEASE)
+        {
             Breakout.Keys[key] = false;
+            Breakout.KeysProcessed[key] = false; // Reset the process status
+        }
     }
 }
 

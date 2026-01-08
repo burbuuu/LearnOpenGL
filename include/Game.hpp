@@ -9,6 +9,8 @@
 #include "ParticleGenerator.hpp"
 #include "engine/SpriteRenderer.hpp"
 #include "GameLevel.hpp"
+#include "PostProcessor.hpp"
+
 
 enum GameState
 {
@@ -25,11 +27,13 @@ const float PLAYER_VELOCITY(500.0f);
 const glm::vec2 INITIAL_BALL_VELOCITY(100.0f, -350.0f);
 const float BALL_RADIUS = 12.5f;
 
+
 class Game
 {
 public:
     GameState State;
     bool Keys[1024];
+    bool KeysProcessed[1024]; // Tracks if the key press has been handled. Used for single press action 
     unsigned int Width, Height;
     
     // Constructor and destructor
@@ -51,6 +55,9 @@ public:
     void ResetPlayer();
 
     void DoCollisions();
+
+    // Debug
+    void ProcessDebugInput();
     
 
 private:
@@ -68,4 +75,10 @@ private:
 
     // Particles
     ParticleGenerator *Particles;
+
+    // Post processor 
+    PostProcessor *Effects;
+    float ShakeTime;
+
+
 };

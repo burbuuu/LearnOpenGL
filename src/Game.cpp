@@ -1,6 +1,7 @@
 #include "Game.hpp"
 #include "Collision.hpp"
 #include "ParticleGenerator.hpp"
+#include "PostProcessor.hpp"
 #include "engine/ResourceManager.hpp"
 #include "BallObject.hpp"
 #include "GameObject.hpp"
@@ -9,6 +10,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/fwd.hpp>
 #include <algorithm>
+#include <iostream>
 
 
 // Constructor
@@ -21,6 +23,8 @@ Game::Game(unsigned int width, unsigned int heigth)
     , Player(nullptr)
     , Ball(nullptr)
     , Particles(nullptr)
+    , Effects(nullptr)
+    , ShakeTime(0.0f)
 {
 }
 
@@ -34,6 +38,7 @@ void Game::Init()
     // Load shaders
     ResourceManager::LoadShader("resources/shaders/sprite.vs", "resources/shaders/sprite.fs", nullptr, "sprite");
     ResourceManager::LoadShader("resources/shaders/particle.vs", "resources/shaders/particle.fs", nullptr, "particle");
+    ResourceManager::LoadShader("resources/shaders/post_processing.vs", "resources/shaders/post_processing.fs",nullptr, "postprocessing");
 
     // Configure shaders
     glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(this->Width), 
@@ -43,10 +48,12 @@ void Game::Init()
     ResourceManager::GetShader("particle").Use().SetInteger("sprite", 0);
     ResourceManager::GetShader("particle").SetMatrix4("projection", projection);
 
+
     // Set render-specific controls
     renderer = new SpriteRenderer(ResourceManager::GetShader("sprite"));
+    Effects = new PostProcessor(ResourceManager::GetShader("postprocessing"), this->Width, this->Height);
 
-    // load textures
+    // Load textures
     ResourceManager::LoadTexture("resources/textures/awesomeface.png", true, "face"); // Ball texture
     ResourceManager::LoadTexture("resources/textures/background.jpg", false, "background");
     ResourceManager::LoadTexture("resources/textures/block.png", false, "block");
@@ -75,7 +82,7 @@ void Game::Init()
     glm::vec2 ballPos = playerInitialPos + glm::vec2(PLAYER_SIZE.x/2.0f - BALL_RADIUS, -BALL_RADIUS *2.0f);
     Ball = new BallObject(ballPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("face"));
 
-    // Initialize particles
+    // Initialize particle generator
     Particles = new ParticleGenerator(
         ResourceManager::GetShader("particle"),
         ResourceManager::GetTexture("particle"),
@@ -91,17 +98,23 @@ void Game::Update(float dt)
 
     // Check for collisions
     DoCollisions();
+    
+    // Update particles
+    Particles->Update(dt, *Ball, 2, glm::vec2(Ball->radius / 2.0f));
 
-    // check loss condition
+    // Reduce shake time
+    if (ShakeTime > 0.0f)
+    {
+        ShakeTime -= dt;
+        if(ShakeTime <= 0.0f) Effects->Shake = false;
+    }
+    
+    // Check loss condition
     if (Ball->Position.y >= this->Height) // did ball reach bottom edge?
     {
         this->ResetLevel();
         this->ResetPlayer();
     }
-
-    // Update particles
-    Particles->Update(dt, *Ball, 2, glm::vec2(Ball->radius / 2.0f));
-
 }
 
 void Game::ProcessInput(float dt) 
@@ -134,26 +147,33 @@ void Game::ProcessInput(float dt)
             Ball->stuck = false;
         }
     }
+
+
+#ifdef DEBUG
+    ProcessDebugInput();
+#endif
 }
 
 void Game::Render() 
 {
     if(this->State == GAME_ACTIVE)
     {
-        // Draw background
-        renderer->DrawSprite(ResourceManager::GetTexture("background"),glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
-        
-        // Draw level
-        Levels[this->Level].Draw(*renderer);
-
-        // Draw player
-        Player->Draw(*renderer);
-        
-        // Render particles
-        Particles->Draw(); // use its own renderer
-        
-        // Render ball
-        Ball->Draw(*renderer);
+        // Begin rendering to postprocessing framebuffer
+        Effects->BeginRender();
+            // Draw background
+            renderer->DrawSprite(ResourceManager::GetTexture("background"),glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
+            // Draw level
+            Levels[this->Level].Draw(*renderer);
+            // Draw player
+            Player->Draw(*renderer);
+            // Render particles
+            Particles->Draw(); // use its own renderer        
+            // Render ball
+            Ball->Draw(*renderer);
+        // End rendering to postprocessing framebuffer
+        Effects->EndRender();
+        // Render postprocessing quad
+        Effects->Render(glfwGetTime());
     } 
 }
 
@@ -244,5 +264,36 @@ void Game::DoCollisions()
         Ball->Velocity = glm::normalize(Ball->Velocity) * glm::length(oldVelocity); // keep speed consistent over both axes (multiply by length of old velocity, so total strength is not changed)
         // fix sticky paddle
         Ball->Velocity.y = -1.0f * abs(Ball->Velocity.y);
+    }
+}
+
+
+// Debug functions
+void Game::ProcessDebugInput()
+{
+    if (this->State == GAME_ACTIVE)
+    {
+        // Chaos (toggle) Key I
+        if (Keys[GLFW_KEY_I] && !KeysProcessed[GLFW_KEY_I])
+        {
+            Effects->Chaos = !Effects->Chaos;
+            KeysProcessed[GLFW_KEY_I] = true;
+        }
+
+        // Confuse (toggle) Key O
+        if (Keys[GLFW_KEY_O] && !KeysProcessed[GLFW_KEY_O])
+        {
+            Effects->Confuse = !Effects->Confuse;
+            KeysProcessed[GLFW_KEY_O] = true;
+        }
+
+        // Shake (set time to 0.05f): Key P
+        if (Keys[GLFW_KEY_P] && !KeysProcessed[GLFW_KEY_P])
+        {
+            ShakeTime = 0.05f;
+            Effects->Shake = true;
+            KeysProcessed[GLFW_KEY_P] = true;
+
+        }
     }
 }

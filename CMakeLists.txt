@@ -13,6 +13,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 message(STATUS "CMake build type: ${CMAKE_BUILD_TYPE}")
 
+
 # --------------
 # ---- GLFW ----
 
@@ -72,6 +73,7 @@ add_executable(${PROJECT_NAME}
     src/BallObject.cpp
     src/Collision.cpp
     src/ParticleGenerator.cpp
+    src/PostProcessor.cpp
 )
 
 target_include_directories(${PROJECT_NAME}
