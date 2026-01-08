@@ -6,6 +6,7 @@
 
 #include "BallObject.hpp"
 #include "GameObject.hpp"
+#include "ParticleGenerator.hpp"
 #include "engine/SpriteRenderer.hpp"
 #include "GameLevel.hpp"
 
@@ -64,4 +65,7 @@ private:
 
     // Ball
     BallObject* Ball;
+
+    // Particles
+    ParticleGenerator *Particles;
 };

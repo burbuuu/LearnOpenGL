@@ -71,6 +71,7 @@ add_executable(${PROJECT_NAME}
     src/GameObject.cpp
     src/BallObject.cpp
     src/Collision.cpp
+    src/ParticleGenerator.cpp
 )
 
 target_include_directories(${PROJECT_NAME}
