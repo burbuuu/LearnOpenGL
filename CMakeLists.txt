@@ -87,6 +87,18 @@ target_link_libraries(${PROJECT_NAME}
         stb_impl
 )
 
+# -------------------------------------
+# ---- Configuration Definitions ----
+
+target_compile_definitions(${PROJECT_NAME}
+    PRIVATE
+        # Define NDEBUG in Release builds to disable assertions and enable optimizations
+        $<$<CONFIG:Release>:NDEBUG>
+        
+        # Define DEBUG in Debug builds (useful for custom logging/features)
+        $<$<CONFIG:Debug>:DEBUG>
+)
+
 # -------------------
 # ---- Output dirs ---
 set_target_properties(${PROJECT_NAME} PROPERTIES
