@@ -6,6 +6,7 @@
 #include "engine/ResourceManager.hpp"
 #include "BallObject.hpp"
 #include "GameObject.hpp"
+#include "engine/SoundEngine.hpp"
 
 
 #include <GLFW/glfw3.h>
@@ -27,6 +28,7 @@ Game::Game(unsigned int width, unsigned int heigth)
     , Particles(nullptr)
     , Effects(nullptr)
     , ShakeTime(0.0f)
+    , soundEngine(nullptr)
 {
 }
 
@@ -37,6 +39,7 @@ Game::~Game()
     Ball = nullptr;
     Particles = nullptr;
     Effects = nullptr;
+    delete soundEngine;
 }
 
 void Game::Init() 
@@ -101,6 +104,8 @@ void Game::Init()
         500
     );
 
+    soundEngine = new SoundEngine();
+    soundEngine->playMusic("resources/audio/breakout.wav", true);
 }
 
 void Game::Update(float dt) 
@@ -247,11 +252,14 @@ void Game::DoCollisions()
                 {
                     box.Destroyed = true;
                     this->SpawnPowerUps(box);
+                    soundEngine->playSFX("resources/audio/blip.wav");
                 }
                 else
                 {   // if block is solid, enable shake effect
                     ShakeTime = 0.05f;
                     Effects->Shake = true;
+                    // Play solid block sound
+                    soundEngine->playSFX("resources/audio/solid.wav");
                 }
                 // collision resolution
                 Direction dir = std::get<1>(collision);
@@ -303,6 +311,9 @@ void Game::DoCollisions()
         // If ball is sticky, stuck it to the paddle
         Ball->Stuck = Ball->Sticky; // Implements sticky effect
 
+        // Play sfx
+        soundEngine->playSFX("resources/audio/bleep.wav");
+
     }
 
     // Check for power up / player interaction
@@ -319,6 +330,9 @@ void Game::DoCollisions()
             ActivatePowerUp(powerUp);
             powerUp.Destroyed = true;
             powerUp.Activated = true;
+
+            // Play sfx
+            soundEngine->playSFX("resources/audio/powerup.wav");
         }
     }
 }

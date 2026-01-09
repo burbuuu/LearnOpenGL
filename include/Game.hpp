@@ -9,6 +9,7 @@
 #include "GameObject.hpp"
 #include "ParticleGenerator.hpp"
 #include "PowerUp.hpp"
+#include "engine/SoundEngine.hpp"
 #include "engine/SpriteRenderer.hpp"
 #include "GameLevel.hpp"
 #include "PostProcessor.hpp"
@@ -92,4 +93,6 @@ private:
 
     // Power ups
     std::vector<PowerUp> PowerUps;
+
+    SoundEngine *soundEngine;
 };

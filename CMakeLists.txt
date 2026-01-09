@@ -66,7 +66,12 @@ set(IRRKLANG_INCLUDE_DIR "external/irrKlang/include")
 set(IRRKLANG_ROOT_DIR "external/irrKlang")
 
 # Create an IMPORTED target for the irrKlang library
-add_library(irrklang STATIC IMPORTED)
+if (WIN32)
+    add_library(irrklang STATIC IMPORTED)
+else()
+    add_library(irrklang SHARED IMPORTED)
+endif()
+
 
 target_include_directories(irrklang
     INTERFACE
@@ -104,7 +109,6 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set_target_properties(irrklang PROPERTIES
         IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/${IRRKLANG_LIB_PATH}"
         # Setting RPATH is critical on Linux so the executable finds the SO at runtime
-        IMPORTED_LINK_INTERFACE_LIBRARIES "-Wl,-rpath,\\$ORIGIN" # Use $ORIGIN for relative path if copied locally
     )
 
 else()
@@ -119,6 +123,7 @@ add_executable(${PROJECT_NAME}
     src/engine/Shader.cpp
     src/engine/Texture.cpp
     src/engine/SpriteRenderer.cpp
+    src/engine/SoundEngine.cpp
     src/Game.cpp
     src/main.cpp
     src/GameLevel.cpp
