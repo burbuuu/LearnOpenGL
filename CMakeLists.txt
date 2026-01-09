@@ -74,6 +74,7 @@ add_executable(${PROJECT_NAME}
     src/Collision.cpp
     src/ParticleGenerator.cpp
     src/PostProcessor.cpp
+    src/PowerUp.cpp
 )
 
 target_include_directories(${PROJECT_NAME}

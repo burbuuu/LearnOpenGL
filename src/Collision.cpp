@@ -20,7 +20,7 @@ bool CheckCollision(GameObject &one, GameObject &two) // AABB - AABB collision
 Collision CheckCollision(BallObject &one, GameObject &two)
 {
     // Get center point circle first
-    glm::vec2 center(one.Position + one.radius);
+    glm::vec2 center(one.Position + one.Radius);
     // Calculate AABB info (center, half extents)
     glm::vec2 aabbHalfExtents(two.Size.x / 2.0f, two.Size.y/2.0f);
     glm::vec2 aabbCenter(
@@ -35,7 +35,7 @@ Collision CheckCollision(BallObject &one, GameObject &two)
     // Retrieve vector between center circle and closest point AABB and check if length <= radius
     difference = closest - center;
 
-    if(glm::length(difference) <= one.radius)
+    if(glm::length(difference) <= one.Radius)
         return std::make_tuple(true, VectorDirection(difference),difference);
     else
         return std::make_tuple(false, UP, glm::vec2(0.0f,0.0f));

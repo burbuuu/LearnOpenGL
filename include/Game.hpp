@@ -3,10 +3,12 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <vector>
 
 #include "BallObject.hpp"
 #include "GameObject.hpp"
 #include "ParticleGenerator.hpp"
+#include "PowerUp.hpp"
 #include "engine/SpriteRenderer.hpp"
 #include "GameLevel.hpp"
 #include "PostProcessor.hpp"
@@ -58,6 +60,14 @@ public:
 
     // Debug
     void ProcessDebugInput();
+
+    // Power ups
+    bool ShouldSpawn(unsigned int change);
+    void SpawnPowerUps(GameObject &block);
+    void UpdatePowerUps(float dt);
+    void ActivatePowerUp(PowerUp &powerUp);
+    bool IsOtherPowerUpActive(std::vector<PowerUp> &powerUps, std::string type);
+
     
 
 private:
@@ -80,5 +90,6 @@ private:
     PostProcessor *Effects;
     float ShakeTime;
 
-
+    // Power ups
+    std::vector<PowerUp> PowerUps;
 };
