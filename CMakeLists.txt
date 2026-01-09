@@ -58,6 +58,59 @@ target_include_directories(stb INTERFACE external/stb)
 add_library(stb_impl STATIC src/engine/stb_image.cpp)
 target_link_libraries(stb_impl PUBLIC stb)
 
+# ------------------
+# ---- irrKlang ----
+
+# Define general paths
+set(IRRKLANG_INCLUDE_DIR "external/irrKlang/include")
+set(IRRKLANG_ROOT_DIR "external/irrKlang")
+
+# Create an IMPORTED target for the irrKlang library
+add_library(irrklang STATIC IMPORTED)
+
+target_include_directories(irrklang
+    INTERFACE
+        ${CMAKE_CURRENT_SOURCE_DIR}/${IRRKLANG_INCLUDE_DIR}
+)
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    # Windows Linker Library (.lib) and Runtime DLL (.dll)
+    set(IRRKLANG_LIB_PATH "${IRRKLANG_ROOT_DIR}/lib/Winx64-visualStudio/irrKlang.lib")
+    set(IRRKLANG_BIN_DIR "${IRRKLANG_ROOT_DIR}/bin/winx64-visualStudio")
+    set(IRRKLANG_RUNTIME_FILES
+        irrKlang.dll
+        ikpMP3.dll
+        ikpFlac.dll
+    )
+    
+    # Set the path to the required linker library file
+    set_target_properties(irrklang PROPERTIES
+        IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/${IRRKLANG_LIB_PATH}"
+    )
+
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # Linux Shared Library (.so)
+    # On Linux, the .so file is both the linker library and the runtime binary.
+    set(IRRKLANG_LIB_NAME "libIrrKlang.so")
+    set(IRRKLANG_BIN_DIR "${IRRKLANG_ROOT_DIR}/bin/linux-gcc-64")
+    set(IRRKLANG_LIB_PATH "${IRRKLANG_BIN_DIR}/${IRRKLANG_LIB_NAME}")
+    set(IRRKLANG_RUNTIME_FILES
+        ${IRRKLANG_LIB_NAME}
+        ikpMP3.so
+        ikpFlac.so
+    )
+    
+    # Set the path to the shared object file
+    set_target_properties(irrklang PROPERTIES
+        IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/${IRRKLANG_LIB_PATH}"
+        # Setting RPATH is critical on Linux so the executable finds the SO at runtime
+        IMPORTED_LINK_INTERFACE_LIBRARIES "-Wl,-rpath,\\$ORIGIN" # Use $ORIGIN for relative path if copied locally
+    )
+
+else()
+    message(FATAL_ERROR "Unsupported platform for irrKlang binaries.")
+endif()
+
 # ---------------------
 # ---- Executable ---- 
 
@@ -88,6 +141,7 @@ target_link_libraries(${PROJECT_NAME}
         glad
         glm::glm
         stb_impl
+        irrklang
 )
 
 # -------------------------------------
@@ -138,6 +192,36 @@ add_custom_target(resources ALL
 )
 
 add_dependencies(${PROJECT_NAME} resources)
+
+
+# --------------------------------
+# ---- irrKlang Binary & Plugin Copy ----
+# Copy the DLL/SO and plugins next to the executable at runtime.
+
+# Ensure this step only runs if we successfully defined paths for the current system
+if (IRRKLANG_RUNTIME_FILES)
+    
+    # Define the destination directory for the runtime files (same as executable output)
+    # The RUNTIME_OUTPUT_DIRECTORY properties are used implicitly by TARGET_FILE_DIR
+    set(IRRKLANG_DST_DIR "$<TARGET_FILE_DIR:${PROJECT_NAME}>")
+
+    foreach(FILE_NAME IN LISTS IRRKLANG_RUNTIME_FILES)
+        set(IRRKLANG_SRC_BIN "${CMAKE_CURRENT_SOURCE_DIR}/${IRRKLANG_BIN_DIR}/${FILE_NAME}")
+        set(IRRKLANG_DST_BIN "${IRRKLANG_DST_DIR}/${FILE_NAME}")
+        
+        # Use a POST_BUILD command to execute the copy after the executable is linked
+        add_custom_command(
+            TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    ${IRRKLANG_SRC_BIN}
+                    ${IRRKLANG_DST_BIN}
+            COMMENT "Copying irrKlang runtime file: ${FILE_NAME}"
+        )
+    endforeach()
+else()
+    message(STATUS "No irrKlang runtime binary copy necessary for this platform.")
+endif()
+
 
 # -------------------
 # ---- Warnings -----
