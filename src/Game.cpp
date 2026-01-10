@@ -13,7 +13,7 @@
 #include <glm/fwd.hpp>
 #include <algorithm>
 #include <cstdlib>
-#include <iostream>
+
 
 
 // Constructor
@@ -211,13 +211,13 @@ void Game::ResetLevel()
             Levels[0].Load("resources/levels/one.lvl", Width, Height/2);
             break;
         case 1:
-            Levels[0].Load("resources/levels/two.lvl", Width, Height/2);
+            Levels[1].Load("resources/levels/two.lvl", Width, Height/2);
             break;
         case 2:
-            Levels[0].Load("resources/levels/three.lvl", Width, Height/2);
+            Levels[2].Load("resources/levels/three.lvl", Width, Height/2);
             break;
         case 3:
-            Levels[0].Load("resources/levels/four.lvl", Width, Height/2);
+            Levels[3].Load("resources/levels/four.lvl", Width, Height/2);
             break;
         default:
             break;
