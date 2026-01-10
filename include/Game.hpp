@@ -95,4 +95,7 @@ private:
     std::vector<PowerUp> PowerUps;
 
     SoundEngine *soundEngine;
+
+    void CheckLevelCompletion();
+    void CheckLossCondition();
 };

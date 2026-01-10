@@ -129,12 +129,8 @@ void Game::Update(float dt)
         if(ShakeTime <= 0.0f) Effects->Shake = false;
     }
     
-    // Check loss condition
-    if (Ball->Position.y >= this->Height) // did ball reach bottom edge?
-    {
-        this->ResetLevel();
-        this->ResetPlayer();
-    }
+    CheckLossCondition();
+    CheckLevelCompletion();
 }
 
 void Game::ProcessInput(float dt) 
@@ -236,6 +232,32 @@ void Game::ResetPlayer()
     Effects->Confuse = false;
     Player->Color = glm::vec3(1.0f);
     Ball->Color = glm::vec3(1.0f);
+}
+
+void Game::CheckLossCondition()
+{
+    // did ball reach bottom edge?
+    if (Ball->Position.y >= this->Height)
+    {
+        this->ResetLevel();
+        this->ResetPlayer();
+    }
+}
+
+void Game::CheckLevelCompletion()
+{
+    if (!Levels[Level].IsCompleted()) return;
+
+    Level++;
+
+    if(Level >= Levels.size())
+    {
+        State = GAME_WIN;
+        return;
+    }
+
+    ResetLevel();
+    ResetPlayer();
 }
 
 void Game::DoCollisions()
