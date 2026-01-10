@@ -124,15 +124,17 @@ add_executable(${PROJECT_NAME}
     src/engine/Texture.cpp
     src/engine/SpriteRenderer.cpp
     src/engine/SoundEngine.cpp
-    src/Game.cpp
+    src/engine/PostProcessor.cpp
     src/main.cpp
     src/GameLevel.cpp
     src/GameObject.cpp
     src/BallObject.cpp
     src/Collision.cpp
     src/ParticleGenerator.cpp
-    src/PostProcessor.cpp
     src/PowerUp.cpp
+    src/Screens/Screen.cpp
+    src/Screens/Game.cpp
+    src/Application.cpp
 )
 
 target_include_directories(${PROJECT_NAME}
