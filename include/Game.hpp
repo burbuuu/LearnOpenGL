@@ -9,14 +9,10 @@
 #include "GameObject.hpp"
 #include "ParticleGenerator.hpp"
 #include "PowerUp.hpp"
-#include "Screens/Screen.hpp"
+#include "engine/SoundEngine.hpp"
+#include "engine/SpriteRenderer.hpp"
 #include "GameLevel.hpp"
-
-
-// forward declarations for context-provided services
-class SpriteRenderer;
-class SoundEngine;
-class PostProcessor;
+#include "PostProcessor.hpp"
 
 
 enum GameState
@@ -35,28 +31,27 @@ const glm::vec2 INITIAL_BALL_VELOCITY(100.0f, -350.0f);
 const float BALL_RADIUS = 12.5f;
 
 
-class Game : public Screen
+class Game
 {
 public:
     GameState State;
+    bool Keys[1024];
+    bool KeysProcessed[1024]; // Tracks if the key press has been handled. Used for single press action 
     unsigned int Width, Height;
     
     // Constructor and destructor
-    Game(Application *app, unsigned int width, unsigned int height);
+    Game(unsigned int width, unsigned int height);
     ~Game();
 
     // Initialize game state (load shaders, textures and levels)
     void Init();
-
-    // Screen lifecycle
-    void OnEnter() override;
 
     // Game loop
     void ProcessInput(float dt);
     void Update(float dt);
     void Render();
 
-    SpriteRenderer* GetRenderer();
+    SpriteRenderer* GetRenderer(){ return renderer; }
 
     // Reset
     void ResetLevel();
@@ -77,7 +72,7 @@ public:
     
 
 private:
-    // renderer is provided by Application via Screen::app
+    SpriteRenderer* renderer;
 
     // Levels
     std::vector<GameLevel> Levels;
@@ -92,14 +87,12 @@ private:
     // Particles
     ParticleGenerator *Particles;
 
-    // Post processor (provided by Application)
+    // Post processor 
+    PostProcessor *Effects;
     float ShakeTime;
 
     // Power ups
     std::vector<PowerUp> PowerUps;
 
-    // Sound engine provided by Application
-
-    void CheckLevelCompletion();
-    void CheckLossLives();
+    SoundEngine *soundEngine;
 };
