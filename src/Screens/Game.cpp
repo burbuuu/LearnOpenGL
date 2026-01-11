@@ -16,7 +16,6 @@
 #include <glm/fwd.hpp>
 #include <algorithm>
 #include <cstdlib>
-#include <linux/input.h>
 #include <sstream>
 
 

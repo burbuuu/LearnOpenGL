@@ -25,11 +25,22 @@ const unsigned int SCREEN_WIDTH = 800;
 const unsigned int SCREEN_HEIGHT = 600;
 
 // No globals: we'll store the active screen pointer in the GLFW window user pointer.
-
 // Application will be created inside main to control lifetime relative to GLFW
+
+void glfw_error_callback(int error, const char* description)
+{
+    std::cerr << "GLFW Error (" << error << "): " << description << std::endl;
+}
 
 int main(int argc, char *argv[])
 {
+    glfwSetErrorCallback(glfw_error_callback);
+    if (!glfwInit())
+    {
+        std::cerr << "GLFW init failed\n";
+        return -1;
+    }
+
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -40,6 +51,14 @@ int main(int argc, char *argv[])
     glfwWindowHint(GLFW_RESIZABLE, false);
 
     GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Breakout", nullptr, nullptr);
+
+    if (!window)
+    {
+        std::cerr << "Failed to create GLFW window\n";
+        glfwTerminate();
+        return -1;
+    }
+
     glfwMakeContextCurrent(window);
 
     // glad: load all OpenGL function pointers

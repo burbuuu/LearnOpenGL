@@ -40,7 +40,7 @@ target_include_directories(glad
 
 target_link_libraries(glad
     PUBLIC
-        OpenGL::OpenGL
+        OpenGL::GL
 )
 
 # -------------------
