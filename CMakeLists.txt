@@ -116,6 +116,17 @@ else()
 endif()
 
 # ---------------------
+# ---- FreeType ----
+
+set(FT_DISABLE_ZLIB ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_BZIP2 ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_PNG ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_HARFBUZZ ON CACHE BOOL "" FORCE)
+
+add_subdirectory(external/freetype)
+
+
+# ---------------------
 # ---- Executable ---- 
 
 add_executable(${PROJECT_NAME}
@@ -125,6 +136,7 @@ add_executable(${PROJECT_NAME}
     src/engine/SpriteRenderer.cpp
     src/engine/SoundEngine.cpp
     src/engine/PostProcessor.cpp
+    src/engine/TextRenderer.cpp
     src/main.cpp
     src/GameLevel.cpp
     src/GameObject.cpp
@@ -134,6 +146,7 @@ add_executable(${PROJECT_NAME}
     src/PowerUp.cpp
     src/Screens/Screen.cpp
     src/Screens/Game.cpp
+    src/Screens/Logo.cpp
     src/Application.cpp
 )
 
@@ -149,6 +162,7 @@ target_link_libraries(${PROJECT_NAME}
         glm::glm
         stb_impl
         irrklang
+        freetype
 )
 
 # -------------------------------------

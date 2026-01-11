@@ -45,22 +45,22 @@ public:
     Game(Application *app, unsigned int width, unsigned int height);
     ~Game();
 
-    // Initialize game state 
+    // Initialize game state (load shaders, textures and levels)
     void Init();
 
     // Screen lifecycle
     void OnEnter() override;
 
     // Game loop
-    void ProcessInput(float dt) override;
-    void Update(float dt) override;
-    void Render() override;
+    void ProcessInput(float dt);
+    void Update(float dt);
+    void Render();
 
+    SpriteRenderer* GetRenderer();
 
     // Reset
     void ResetLevel();
     void ResetPlayer();
-    void StartGame();
 
     void DoCollisions();
 
@@ -85,7 +85,6 @@ private:
 
     // Player
     GameObject* Player;
-    unsigned int lives;
 
     // Ball
     BallObject* Ball;

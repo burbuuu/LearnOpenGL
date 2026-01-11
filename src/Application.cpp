@@ -3,6 +3,9 @@
 #include "engine/PostProcessor.hpp"
 #include "engine/ResourceManager.hpp"
 #include "engine/SoundEngine.hpp"
+#include "engine/TextRenderer.hpp"
+#include "Screens/Game.hpp"
+#include "Screens/Logo.hpp"
 
 Application::Application(unsigned int w, unsigned int h)
     : width(w)
@@ -18,7 +21,7 @@ void Application::Init()
     ResourceManager::LoadShader("resources/shaders/sprite.vs", "resources/shaders/sprite.fs", nullptr, "sprite");
     ResourceManager::LoadShader("resources/shaders/particle.vs", "resources/shaders/particle.fs", nullptr, "particle");
     ResourceManager::LoadShader("resources/shaders/post_processing.vs", "resources/shaders/post_processing.fs",nullptr, "postprocessing");
-
+   
     // Configure shaders
     glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, -1.0f, 1.0f);
     ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
@@ -28,14 +31,18 @@ void Application::Init()
 
     // Create context members and expose them to the context
     renderer = std::make_unique<SpriteRenderer>(ResourceManager::GetShader("sprite"));
+    textRender = std::make_unique<TextRenderer>(width, height);
+    textRender->Load("resources/fonts/OCRAEXT.TTF", 24);
     effects = std::make_unique<PostProcessor>(ResourceManager::GetShader("postprocessing"),width, height);
     sound = std::make_unique<SoundEngine>();
     input = std::make_unique<Input>();
 
     context.renderer = renderer.get();
+    context.textRender = textRender.get();
     context.effects = effects.get();
     context.sound = sound.get();
     context.input = input.get();
+
 
 
     // Load textures
@@ -67,12 +74,39 @@ void Application::SetScreen(std::unique_ptr<Screen> newScreen)
     currentScreen = std::move(newScreen);
 }
 
+void Application::RequestScreen(ScreenType type)
+{
+    screenChangeRequested = true;
+    requestedScreen = type;
+}
+
+void Application::SwitchScreen(ScreenType requestedScreen)
+{
+    switch (requestedScreen)
+    {
+
+    case ScreenType::Title:
+        SetScreen(std::make_unique<Game>(this, width, height));;
+        break;
+
+    case ScreenType::Gameplay:
+        SetScreen(std::make_unique<Game>(this, width, height));
+        break;
+    }
+}
+
 void Application::Update(float dt)
 {
     if (currentScreen)
     {
         currentScreen->ProcessInput(dt);
         currentScreen->Update(dt);
+    }
+
+    if (screenChangeRequested)
+    {
+        SwitchScreen(requestedScreen);
+        screenChangeRequested = false;
     }
 }
 

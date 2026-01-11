@@ -10,7 +10,7 @@
 #include <GLFW/glfw3.h>
 
 #include "Application.hpp"
-#include "Screens/Game.hpp"
+#include "Screens/Logo.hpp"
 #include "engine/ResourceManager.hpp"
 
 #include <iostream>
@@ -65,8 +65,8 @@ int main(int argc, char *argv[])
     {
         Application App(SCREEN_WIDTH, SCREEN_HEIGHT);
         App.Init();
-        auto game = std::make_unique<Game>(&App, SCREEN_WIDTH, SCREEN_HEIGHT);
-        App.SetScreen(std::move(game));
+        auto logo = std::make_unique<Logo>(&App, SCREEN_WIDTH, SCREEN_HEIGHT);
+        App.SetScreen(std::move(logo));
         glfwSetWindowUserPointer(window, &App);
 
         // main loop

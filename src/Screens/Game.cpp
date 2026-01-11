@@ -9,22 +9,26 @@
 #include "engine/PostProcessor.hpp"
 #include "engine/SpriteRenderer.hpp"
 #include "engine/SoundEngine.hpp"
+#include "engine/TextRenderer.hpp"
 
 
 #include <GLFW/glfw3.h>
 #include <glm/fwd.hpp>
 #include <algorithm>
 #include <cstdlib>
+#include <linux/input.h>
+#include <sstream>
 
 
 
 // Constructor
 Game::Game(Application *application, unsigned int width, unsigned int heigth)
     : Screen(application)
-    , State(GAME_ACTIVE)
+    , State(GAME_MENU)
     , Width(width)
     , Height(heigth)
     , Player(nullptr)
+    , lives(3)
     , Ball(nullptr)
     , Particles(nullptr)
     , ShakeTime(0.0f)
@@ -37,11 +41,13 @@ Game::~Game()
     Player = nullptr;
     Ball = nullptr;
     Particles = nullptr;
+    Levels.clear();
 }
 
 void Game::Init() 
 {
-    // Application is responsible for loading shaders/textures and creating renderer/effects/sound
+    // Application is responsible for loading shaders/textures and creating renderer/effects/sound and text renderer. We acces it 
+    // throught app->context
 
     // Load levels
     GameLevel one, two, three, four;
@@ -99,12 +105,36 @@ void Game::Update(float dt)
         if(ShakeTime <= 0.0f) app->GetContext().effects->Shake = false;
     }
     
-    CheckLossCondition();
+    CheckLossLives();
     CheckLevelCompletion();
 }
 
 void Game::ProcessInput(float dt) 
 {
+    // Get input
+    Input* input = app->GetContext().input;
+
+    if (this->State == GAME_MENU)
+    {
+        if (input->Keys[GLFW_KEY_ENTER] && !input->KeysProcessed[GLFW_KEY_ENTER])
+        {
+            StartGame();
+            input->KeysProcessed[GLFW_KEY_ENTER] = true;
+        }
+        if (input->Keys[GLFW_KEY_W] && !input->KeysProcessed[GLFW_KEY_W])
+        {
+            this->Level = (this->Level + 1) % 4;
+            input->KeysProcessed[GLFW_KEY_W] = true;
+        }
+        if (input->Keys[GLFW_KEY_S] && !input->KeysProcessed[GLFW_KEY_S])
+        {
+            if (this->Level > 0)
+                --this->Level;
+            else
+                this->Level = 3;
+            input->KeysProcessed[GLFW_KEY_S] = true;
+        }
+    }
     if (State == GAME_ACTIVE)
     {   
         // Define gameplay input here
@@ -112,10 +142,10 @@ void Game::ProcessInput(float dt)
         float oldX = Player->Position.x;
 
         // Move player
-        if (app->GetContext().input->Keys[GLFW_KEY_A])
+        if (input->Keys[GLFW_KEY_A])
             Player->Position.x -= velocity;
 
-        if (app->GetContext().input->Keys[GLFW_KEY_D])
+        if (input->Keys[GLFW_KEY_D])
             Player->Position.x += velocity;
 
         // Clamp X position
@@ -128,9 +158,18 @@ void Game::ProcessInput(float dt)
             Ball->Position.x += deltaX;
         }
 
-        if(app->GetContext().input->Keys[GLFW_KEY_SPACE])
+        if(input->Keys[GLFW_KEY_SPACE])
         {
             Ball->Stuck = false;
+        }
+    }
+    if (this->State == GAME_WIN)
+    {
+        if (input->Keys[GLFW_KEY_ENTER])
+        {
+            input->KeysProcessed[GLFW_KEY_ENTER] = true;
+            app->GetContext().effects->Chaos = false;
+            this->State = GAME_MENU;
         }
     }
 
@@ -142,31 +181,51 @@ void Game::ProcessInput(float dt)
 
 void Game::Render() 
 {
-    if(this->State == GAME_ACTIVE)
+    SpriteRenderer *renderer = app->GetContext().renderer;
+    PostProcessor *effects = app->GetContext().effects;
+    TextRenderer *text = app->GetContext().textRender;
+
+    if(this->State == GAME_ACTIVE || this->State == GAME_MENU || this->State == GAME_WIN)
     {
         // Begin rendering to postprocessing framebuffer
-        app->GetContext().effects->BeginRender();
+        effects->BeginRender();
             // Draw background
-            app->GetContext().renderer->DrawSprite(ResourceManager::GetTexture("background"),glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
+            renderer->DrawSprite(ResourceManager::GetTexture("background"),glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
             // Draw level
-            Levels[this->Level].Draw(*app->GetContext().renderer);
+            Levels[this->Level].Draw(*renderer);
             // Draw player
-            Player->Draw(*app->GetContext().renderer);
+            Player->Draw(*renderer);
             // Render particles
             Particles->Draw(); // use its own renderer        
             // Render ball
-            Ball->Draw(*app->GetContext().renderer);
+            Ball->Draw(*renderer);
             // Power ups
             for (PowerUp &powerUp : this->PowerUps)
             {
                 if (!powerUp.Destroyed)
-                    powerUp.Draw(*app->GetContext().renderer);
+                    powerUp.Draw(*renderer);
             }
         // End rendering to postprocessing framebuffer
-        app->GetContext().effects->EndRender();
+        effects->EndRender();
         // Render postprocessing quad
-        app->GetContext().effects->Render(glfwGetTime());
-    } 
+        effects->Render(glfwGetTime());
+        
+        // Display lives
+        std::stringstream ss; ss << this->lives;
+        text->RenderText("Lives:" + ss.str(), 5.0f, 5.0f, 1.0f);
+    }
+    if (this->State == GAME_MENU)
+    {
+        text->RenderText("Press ENTER to start", 250.0f, Height / 2, 1.0f);
+        text->RenderText("Press W or S to select level", 245.0f, Height / 2 + 20.0f, 0.75f);
+    }
+    if (this->State == GAME_WIN)
+    {
+        text->RenderText("You WON!!!", 320.0, Height / 2 - 20.0, 1.0, glm::vec3(0.0, 1.0, 0.0)
+        );
+        text->RenderText("Press ENTER to retry or ESC to quit", 130.0, Height / 2, 1.0, glm::vec3(1.0, 1.0, 0.0)
+        );
+    }
 }
 
 void Game::ResetLevel()
@@ -204,30 +263,38 @@ void Game::ResetPlayer()
     Ball->Color = glm::vec3(1.0f);
 }
 
-void Game::CheckLossCondition()
+void Game::StartGame()
+{
+    lives = 3;
+    State = GAME_ACTIVE;
+    ResetLevel();
+    ResetPlayer();
+}
+
+void Game::CheckLossLives()
 {
     // did ball reach bottom edge?
     if (Ball->Position.y >= this->Height)
     {
-        this->ResetLevel();
-        this->ResetPlayer();
+        lives--;
+        ResetPlayer();
+    }
+
+    if (lives <= 0)
+    {
+        ResetLevel();
+        State = GAME_MENU;
     }
 }
 
 void Game::CheckLevelCompletion()
 {
-    if (!Levels[Level].IsCompleted()) return;
+    if (!Levels[Level].IsCompleted() || State != GAME_ACTIVE) return;
 
-    Level++;
-
-    if(Level >= Levels.size())
-    {
-        State = GAME_WIN;
-        return;
-    }
-
-    ResetLevel();
-    ResetPlayer();
+    this->ResetLevel();
+    this->ResetPlayer();
+    app->GetContext().effects->Chaos = true;
+    this->State = GAME_WIN;
 }
 
 void Game::DoCollisions()
@@ -355,11 +422,22 @@ void Game::ProcessDebugInput()
             ShakeTime = 0.05f;
             app->GetContext().effects->Shake = true;
             app->GetContext().input->KeysProcessed[GLFW_KEY_P] = true;
+        }
 
+        // Destroy all blocks: key U
+        if (app->GetContext().input->Keys[GLFW_KEY_U] &&
+            !app->GetContext().input->KeysProcessed[GLFW_KEY_U])
+        {
+            for (GameObject& brick : Levels[Level].Bricks)
+            {
+                if (!brick.IsSolid)
+                    brick.Destroyed = true;
+            }
+
+            app->GetContext().input->KeysProcessed[GLFW_KEY_U] = true;
         }
     }
 }
-
 
 // Power up spawn and update functions
 
@@ -482,9 +560,4 @@ bool Game::IsOtherPowerUpActive(std::vector<PowerUp> &powerUps, std::string type
                 return true;
     }
     return false;
-}
-
-SpriteRenderer* Game::GetRenderer()
-{
-    return app->GetContext().renderer;
 }

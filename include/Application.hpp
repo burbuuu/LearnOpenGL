@@ -4,16 +4,18 @@
 #include "engine/SpriteRenderer.hpp"
 #include "engine/PostProcessor.hpp"
 #include "engine/SoundEngine.hpp"
+#include "engine/TextRenderer.hpp"
 
 #include <memory>
 
 struct Context
 {
     SpriteRenderer* renderer;
+    TextRenderer* textRender;
     PostProcessor* effects;
     SoundEngine* sound;
-    // input manager owned by Application
     struct Input* input;
+
 };
 
 // Small input manager
@@ -27,9 +29,8 @@ struct Input
 // Available screens
 enum class ScreenType
 {
-    Title,
-    Gameplay,
-    Ending
+    Title
+    , Gameplay
 };
 
 class Application
@@ -40,21 +41,27 @@ public:
 
     void Init();
     void SetScreen(std::unique_ptr<Screen> newScreen);
+    void RequestScreen(ScreenType type);
     void Update(float dt);
     void Render();
 
     Context& GetContext() { return context; }
 
 private:
-    // Input manager
-    std::unique_ptr<Input> input;
+
     // Context members (owned by application) 
     std::unique_ptr<SpriteRenderer> renderer;
+    std::unique_ptr<TextRenderer> textRender;
     std::unique_ptr<PostProcessor> effects;
     std::unique_ptr<SoundEngine> sound;
+    std::unique_ptr<Input> input;
 
     Context context;
     std::unique_ptr<Screen> currentScreen;
+
+    bool screenChangeRequested = false;
+    ScreenType requestedScreen;
+    void SwitchScreen(ScreenType requestedScreen);
 
     unsigned int width;
     unsigned int height;
