@@ -9,7 +9,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "Game.hpp"
+#include "Application.hpp"
+#include "Screens/Logo.hpp"
 #include "engine/ResourceManager.hpp"
 
 #include <iostream>
@@ -23,7 +24,9 @@ const unsigned int SCREEN_WIDTH = 800;
 // The height of the screen
 const unsigned int SCREEN_HEIGHT = 600;
 
-Game Breakout(SCREEN_WIDTH, SCREEN_HEIGHT);
+// No globals: we'll store the active screen pointer in the GLFW window user pointer.
+
+// Application will be created inside main to control lifetime relative to GLFW
 
 int main(int argc, char *argv[])
 {
@@ -56,45 +59,40 @@ int main(int argc, char *argv[])
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    // initialize game
-    // ---------------
-    Breakout.Init();
-
-    // deltaTime variables
-    // -------------------
-    float deltaTime = 0.0f;
-    float lastFrame = 0.0f;
-
-    while (!glfwWindowShouldClose(window))
+    // initialize application and first screen inside a scope so App
+    // is destroyed before we call glfwTerminate (so GL context is valid during destruction)
+    // -------------------------------------------------------------------------------
     {
-        // calculate delta time
-        // --------------------
-        float currentFrame = glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
-        glfwPollEvents();
+        Application App(SCREEN_WIDTH, SCREEN_HEIGHT);
+        App.Init();
+        auto logo = std::make_unique<Logo>(&App, SCREEN_WIDTH, SCREEN_HEIGHT);
+        App.SetScreen(std::move(logo));
+        glfwSetWindowUserPointer(window, &App);
 
-        // manage user input
-        // -----------------
-        Breakout.ProcessInput(deltaTime);
+        // main loop
+        // ---------
+        float deltaTime = 0.0f;
+        float lastFrame = 0.0f;
 
-        // update game state
-        // -----------------
-        Breakout.Update(deltaTime);
+        while (!glfwWindowShouldClose(window))
+        {
+            float currentFrame = glfwGetTime();
+            deltaTime = currentFrame - lastFrame;
+            lastFrame = currentFrame;
+            glfwPollEvents();
 
-        // render
-        // ------
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        Breakout.Render();
+            // manage user input, update and render via Application
+            App.Update(deltaTime);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+            App.Render();
 
-        glfwSwapBuffers(window);
+            glfwSwapBuffers(window);
+        }
+
+        // delete all resources as loaded using the resource manager
+        ResourceManager::Clear();
     }
-
-    // delete all resources as loaded using the resource manager
-    // ---------------------------------------------------------
-    ResourceManager::Clear();
-
     glfwTerminate();
     return 0;
 }
@@ -106,18 +104,19 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    if (key >= 0 && key < 1024)
+    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+    if (key >= 0 && key < 1024 && app)
     {
         if (action == GLFW_PRESS)
         {
-            Breakout.Keys[key] = true;
-            Breakout.KeysProcessed[key] = false; // For single press actions this is needed
+            app->GetContext().input->Keys[key] = true;
+            app->GetContext().input->KeysProcessed[key] = false; // For single press actions this is needed
 
         }
         else if (action == GLFW_RELEASE)
         {
-            Breakout.Keys[key] = false;
-            Breakout.KeysProcessed[key] = false; // Reset the process status
+            app->GetContext().input->Keys[key] = false;
+            app->GetContext().input->KeysProcessed[key] = false; // Reset the process status
         }
     }
 }

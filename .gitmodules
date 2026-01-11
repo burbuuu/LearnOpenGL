@@ -6,4 +6,7 @@
 	url = https://github.com/g-truc/glm.git
 [submodule "external/irrKlang"]
 	path = external/irrKlang
-	url = https://github.com/jonas2602/irrKlang.git
+	url = https://github.com/jonas2602/irrKlang
+[submodule "external/freetype"]
+	path = external/freetype
+	url = https://gitlab.freedesktop.org/freetype/freetype.git
